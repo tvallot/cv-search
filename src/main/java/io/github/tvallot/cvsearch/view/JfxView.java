@@ -1,219 +1,234 @@
 package io.github.tvallot.cvsearch.view;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-import io.github.tvallot.cvsearch.controller.ApplicantController;
-import io.github.tvallot.cvsearch.model.StrategyDescriptor;
+import io.github.tvallot.cvsearch.controller.SearchController;
+import io.github.tvallot.cvsearch.i18n.LanguageManager;
+import io.github.tvallot.cvsearch.model.SearchResult;
+import io.github.tvallot.cvsearch.model.strategy.StrategyOption;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import io.github.tvallot.cvsearch.utils.LanguageManager;
-import java.util.Locale;
+import javafx.util.StringConverter;
 
 /**
- * Main view of the application, implemented using JavaFX.
+ * A search window, written with JavaFX.
+ *
+ * <p>The view holds no business logic: it collects the searched skills and the chosen
+ * strategy, asks the controller for the results and displays them. Several windows can
+ * be open at the same time on the same controller, and they all follow the current
+ * language.
  */
 public class JfxView {
-    private final HBox searchSkillsBox = new HBox();
-    private final VBox resultBox = new VBox();
-    private int selectedStrategyIndex = 1;
-    private final ApplicantController appController;
+    private static final int WIDTH = 640;
+    private static final int HEIGHT = 480;
+    private static final double SPACING = 10;
+    private static final String CHIP_STYLE = "-fx-padding: 2 2 2 8;"
+            + "-fx-border-color: #888; -fx-border-radius: 12;"
+            + "-fx-background-color: #eef; -fx-background-radius: 12;";
 
-    private Label labelSkill;
-    private Label labelStrategy;
-    private Label labelLanguage;
+    private final Stage stage;
+    private final SearchController controller;
+    private final LanguageManager lang = LanguageManager.getInstance();
+    private final Runnable languageListener = this::refreshTexts;
 
-    private Button submitButton;
-    private Button clearButton;
-    private Button search;
+    private final ObservableList<String> skills = FXCollections.observableArrayList();
+    private final FlowPane skillsPane = new FlowPane(6, 6);
+    private final TextField skillField = new TextField();
+    private final ComboBox<Locale> languageBox = new ComboBox<>();
+    private final ComboBox<StrategyOption> strategyBox = new ComboBox<>();
+    private final ListView<SearchResult> resultList = new ListView<>();
+    private boolean searchDone = false;
 
-    private ComboBox<StrategyDescriptor> comboBox;
-    private Stage stage;
+    private final Label languageLabel = new Label();
+    private final Label skillLabel = new Label();
+    private final Label strategyLabel = new Label();
+    private final Label placeholder = new Label();
+    private final Button addButton = new Button();
+    private final Button clearButton = new Button();
+    private final Button searchButton = new Button();
+    private final Button newWindowButton = new Button();
+
     /**
-     * Constructor initializing the JavaFX view.
-     * @param stage The primary stage for the application.
-     * @param width The width of the application window.
-     * @param height The height of the application window.
+     * Builds the window and shows it.
+     *
+     * @param stage      the JavaFX window to fill
+     * @param controller the controller running the searches
      */
-    public JfxView(final Stage stage, final int width, final int height,
-                   final ApplicantController appController) {
-        this.appController = appController;
+    public JfxView(final Stage stage, final SearchController controller) {
         this.stage = stage;
-        stage.setTitle(LanguageManager.getInstance().get("title"));
-        VBox root = new VBox(
-                createNewSkillWidget(),
-                createLanguageSelector(),
-                searchSkillsBox,
-                createStrategyWidget(),
-                createSearchWidget(),
-                resultBox
-        );
-        Scene scene = new Scene(root, width, height);
-        stage.setScene(scene);
+        this.controller = controller;
+
+        VBox root = new VBox(SPACING,
+                createLanguageRow(),
+                createSkillRow(),
+                skillsPane,
+                createStrategyRow(),
+                createResultList());
+        root.setPadding(new Insets(12));
+        VBox.setVgrow(resultList, Priority.ALWAYS);
+
+        refreshTexts();
+        lang.addListener(languageListener);
+        stage.setOnHidden(e -> lang.removeListener(languageListener));
+
+        stage.setScene(new Scene(root, WIDTH, HEIGHT));
         stage.show();
     }
 
-    /**
-     * Create a widget for adding new skills.
-     * @return A Node representing the new skill widget.
-     */
-    private Node createNewSkillWidget() {
-        HBox newSkillBox = new HBox(10);
-        labelSkill = new Label(LanguageManager.getInstance().get("skill"));
-        TextField textField = new TextField();
-        submitButton = new Button(LanguageManager.getInstance().get("add_skill"));
-        clearButton = new Button(LanguageManager.getInstance().get("clear_skills"));
+    private Node createLanguageRow() {
+        languageBox.getItems().setAll(LanguageManager.SUPPORTED_LOCALES);
+        languageBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(final Locale locale) {
+                if (locale == null) {
+                    return "";
+                }
+                String name = locale.getDisplayLanguage(locale);
+                return name.substring(0, 1).toUpperCase(locale) + name.substring(1);
+            }
 
-        submitButton.setOnAction(e -> addSkill(textField));
-        textField.setOnAction(e -> addSkill(textField));
-        clearButton.setOnAction(e -> searchSkillsBox.getChildren().clear());
+            @Override
+            public Locale fromString(final String text) {
+                return null;
+            }
+        });
+        languageBox.setOnAction(e -> {
+            if (languageBox.getValue() != null) {
+                lang.setLocale(languageBox.getValue());
+            }
+        });
 
-        newSkillBox.getChildren().addAll(labelSkill, textField, submitButton, clearButton);
-        return newSkillBox;
+        newWindowButton.setOnAction(e -> new JfxView(new Stage(), controller));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return row(languageLabel, languageBox, spacer, newWindowButton);
     }
 
-    /**
-     * Add a skill button to the search skills box.
-     * @param textField The text field containing the skill to add.
-     */
-    private void addSkill(final TextField textField) {
-        String text = textField.getText().strip();
-        if (text.isEmpty()) {
-            return;
-        }
-        HBox box = createSkillHBox(text);
-        searchSkillsBox.getChildren().add(box);
-        textField.clear();
-        textField.requestFocus();
+    private Node createSkillRow() {
+        skillField.setOnAction(e -> addSkill());
+        addButton.setOnAction(e -> addSkill());
+        clearButton.setOnAction(e -> skills.clear());
+        skills.addListener((ListChangeListener<String>) change -> redrawSkills());
+
+        HBox.setHgrow(skillField, Priority.ALWAYS);
+        return row(skillLabel, skillField, addButton, clearButton);
     }
 
-    /**
-     * Create an HBox for a skill with a label and a remove button.
-     * @param skill The skill to represent.
-     * @return An HBox containing the skill label and remove button.
-     */
-    private HBox createSkillHBox(final String skill) {
-        final HBox box = new HBox();
-        final Label labelContact = new Label(skill + " ");
-        final Button b = new Button("x");
-        b.setOnMouseClicked(event -> searchSkillsBox.getChildren().remove(box));
-        box.setStyle("-fx-padding: 2;" + "-fx-border-style: solid inside;"
-                + "-fx-border-width: 1;" + "-fx-border-insets: 5;"
-                + "-fx-border-radius: 5;" + "-fx-border-color: black;");
-        box.setAlignment(javafx.geometry.Pos.CENTER);
-        box.getChildren().addAll(labelContact, b);
+    private Node createStrategyRow() {
+        strategyBox.getItems().setAll(controller.getStrategies());
+        strategyBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(final StrategyOption option) {
+                return option == null ? "" : lang.get(option.labelKey());
+            }
+
+            @Override
+            public StrategyOption fromString(final String text) {
+                return null;
+            }
+        });
+        strategyBox.getSelectionModel().selectFirst();
+        searchButton.setOnAction(e -> runSearch());
+        return row(strategyLabel, strategyBox, searchButton);
+    }
+
+    private Node createResultList() {
+        resultList.setPlaceholder(placeholder);
+        resultList.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(final SearchResult item, final boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : format(item));
+            }
+        });
+        return resultList;
+    }
+
+    private static HBox row(final Node... children) {
+        HBox box = new HBox(SPACING, children);
+        box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
 
-    /**
-     * Extracts the list of skills from the searchSkillsBox.
-     * @return List of skill names.
-     */
-    private List<String> getSkillsFromBox() {
-        List<String> skills = new ArrayList<>();
-        for (Node node : searchSkillsBox.getChildren()) {
-            if (node instanceof HBox box) {
-                Label label = (Label) box.getChildren().get(0);
-                skills.add(label.getText().strip());
-            }
+    private void addSkill() {
+        String skill = skillField.getText().strip().toLowerCase(Locale.ROOT);
+        if (!skill.isEmpty() && !skills.contains(skill)) {
+            skills.add(skill);
         }
-        return skills;
+        skillField.clear();
+        skillField.requestFocus();
     }
 
-
-    /**
-     * Create the search button widget.
-     * @return A Node representing the search button widget.
-     */
-    private Node createSearchWidget() {
-        search = new Button(LanguageManager.getInstance().get("search"));
-        search.setOnAction(e -> {
-            resultBox.getChildren().clear();
-            List<String> skills = getSkillsFromBox();
-            List<String> results = appController.applyStrategy(selectedStrategyIndex, skills);
-            for (String result : results) {
-                resultBox.getChildren().add(new Label(result));
-            }
-        });
-        return search;
+    private void redrawSkills() {
+        skillsPane.getChildren().setAll(skills.stream().map(this::createSkillChip).toList());
     }
 
-    /**
-     * Create the strategy selection widget.
-     * @return A Node representing the strategy selection widget.
-     */
-    private Node createStrategyWidget() {
-        HBox newStratBox = new HBox();
-        labelStrategy = new Label(LanguageManager.getInstance().get("strategy"));
-        comboBox = new ComboBox<>();
-        comboBox.getItems().addAll(appController.getStrategies());
-        comboBox.getSelectionModel().selectFirst();
-
-        selectedStrategyIndex = comboBox.getSelectionModel().getSelectedIndex();
-
-        comboBox.setOnAction(e -> {
-            selectedStrategyIndex = comboBox.getSelectionModel().getSelectedIndex();
-        });
-
-        newStratBox.getChildren().addAll(labelStrategy, comboBox);
-        return newStratBox;
+    private Node createSkillChip(final String skill) {
+        Button remove = new Button("×");
+        remove.setStyle("-fx-background-color: transparent; -fx-padding: 0 6 0 6;");
+        remove.setOnAction(e -> skills.remove(skill));
+        HBox chip = new HBox(2, new Label(skill), remove);
+        chip.setAlignment(Pos.CENTER_LEFT);
+        chip.setStyle(CHIP_STYLE);
+        return chip;
     }
 
-    /**
-     * Crée un sélecteur de langue avec une ComboBox permettant
-     * de changer dynamiquement la langue de l'application.
-     *
-     * @return Un Node JavaFX contenant le sélecteur de langue.
-     */
-    private Node createLanguageSelector() {
-        HBox languageBox = new HBox(10);
-        Label labelLanguage = new Label("Language:");
-
-        ComboBox<String> languageComboBox = new ComboBox<>();
-        languageComboBox.getItems().addAll("fr", "en");
-        languageComboBox.setValue("fr"); // language by default
-
-        languageComboBox.setOnAction(e -> {
-            String selectedLang = languageComboBox.getValue();
-            LanguageManager.getInstance().setLocale(new Locale(selectedLang));
-            updateTexts();
-        });
-
-        languageBox.getChildren().addAll(labelLanguage, languageComboBox);
-        return languageBox;
+    private void runSearch() {
+        List<SearchResult> results = controller.search(strategyBox.getValue(), List.copyOf(skills));
+        resultList.getItems().setAll(results);
+        searchDone = true;
+        refreshPlaceholder();
     }
 
-    /**
-     * Met à jour dynamiquement tous les textes de l'interface
-     * en fonction de la langue sélectionnée (labels, boutons, titre, etc.).
-     */
-    public void updateTexts() {
-        LanguageManager lang = LanguageManager.getInstance();
+    private String format(final SearchResult result) {
+        return String.format(lang.getLocale(), "%s   —   %s %.1f   ·   %s %.1f",
+                result.applicantName(),
+                lang.get("average"), result.average(),
+                lang.get("score"), result.score());
+    }
 
-        // update labels
-        labelSkill.setText(lang.get("skill"));
-        labelStrategy.setText(lang.get("strategy"));
+    private void refreshPlaceholder() {
+        placeholder.setText(searchDone ? lang.get("no_results") : "");
+    }
 
-        // update buttons
-        submitButton.setText(lang.get("add_skill"));
-        clearButton.setText(lang.get("clear_skills"));
-        search.setText(lang.get("search"));
-
-        // update title
+    /** Updates every text of the window to the current language. */
+    private void refreshTexts() {
         stage.setTitle(lang.get("title"));
+        languageLabel.setText(lang.get("language"));
+        skillLabel.setText(lang.get("skill"));
+        strategyLabel.setText(lang.get("strategy"));
+        addButton.setText(lang.get("add_skill"));
+        clearButton.setText(lang.get("clear_skills"));
+        searchButton.setText(lang.get("search"));
+        newWindowButton.setText(lang.get("new_window"));
+        languageBox.setValue(lang.getLocale());
 
-        // update strategy ComboBox
-        comboBox.getItems().clear();
-        comboBox.getItems().addAll(appController.getStrategies());
+        // Re-create the strategy cells so that their labels are translated again.
+        StrategyOption selected = strategyBox.getValue();
+        strategyBox.getItems().setAll(controller.getStrategies());
+        strategyBox.setValue(null);
+        strategyBox.setValue(selected);
 
-        comboBox.getSelectionModel().selectFirst();
-        selectedStrategyIndex = comboBox.getSelectionModel().getSelectedIndex();
+        resultList.refresh();
+        refreshPlaceholder();
     }
 }

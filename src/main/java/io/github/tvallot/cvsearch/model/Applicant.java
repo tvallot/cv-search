@@ -1,66 +1,70 @@
 package io.github.tvallot.cvsearch.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Applicant, i.e. person having a name, a list of (skill, score) pairs, and a list of experiences.
+ * A job applicant: a name, a level (0-100) for each skill, and past work experiences.
  */
 public class Applicant {
-    private Map<String, Integer> skills = new HashMap<>();
-    private List<Experience> experiences = new ArrayList<>();
+    private final Map<String, Integer> skills = new HashMap<>();
+    private final List<Experience> experiences = new ArrayList<>();
     private String name;
-    
+
     /**
-     * Get the score for a given skill.
+     * Returns the level of the applicant for a skill, or 0 if the skill is unknown.
      */
     public int getSkill(final String skillName) {
         return skills.getOrDefault(skillName, 0);
     }
 
-    /**
-     * Get all skills of the applicant.
-     */
+    /** Returns all skills of the applicant with their level (read-only view). */
     public Map<String, Integer> getSkills() {
-        return skills;
+        return Collections.unmodifiableMap(skills);
     }
 
-    /**
-     * Assign score {@param value} to skill {@param skillName} for the current applicant.
-     */
-    public void setSkill(final String skillName, final int value) {
-        skills.put(skillName, value);
+    /** Sets the level of the applicant for a skill. */
+    public void setSkill(final String skillName, final int level) {
+        skills.put(skillName, level);
     }
 
-    /**
-     * Get the name of the applicant.
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Set the name of the applicant.
-     * @param name The name to set.
-     */
     public void setName(final String name) {
         this.name = name;
     }
 
-    /**
-     * Add an experience to the applicant.
-     * @param experience The experience to add.
-     */
+    /** Adds a work experience to the applicant. */
     public void addExperience(final Experience experience) {
-        this.experiences.add(experience);
+        experiences.add(experience);
+    }
+
+    /** Returns the work experiences of the applicant (read-only view). */
+    public List<Experience> getExperiences() {
+        return Collections.unmodifiableList(experiences);
     }
 
     /**
-     * Get the list of experiences of the applicant.
+     * Returns the skills to evaluate for a search: the requested ones, or every skill
+     * of the applicant when nothing was requested.
      */
-    public List<Experience> getExperiences() {
-        return experiences;
+    public List<String> skillsToEvaluate(final List<String> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return List.copyOf(skills.keySet());
+        }
+        return requested;
+    }
+
+    /** Returns the total number of years during which the applicant used a skill at work. */
+    public int yearsOfExperience(final String skill) {
+        return experiences.stream()
+                .filter(exp -> exp.keywords().contains(skill))
+                .mapToInt(Experience::duration)
+                .sum();
     }
 }

@@ -5,18 +5,17 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Wrapper around {@link List<Applicant>} implementing the observer pattern.
+ * The set of applicants the search runs on.
  */
 public class ApplicantList implements Iterable<Applicant> {
-    private List<Applicant> list = new ArrayList<>();
+    private final List<Applicant> list = new ArrayList<>();
 
-    void add(final Applicant a) {
-        list.add(a);
+    /** Adds an applicant to the list. */
+    public void add(final Applicant applicant) {
+        list.add(applicant);
     }
 
-    /**
-     * Get the number of applicants in the list.
-     */
+    /** Returns the number of applicants in the list. */
     public int size() {
         return list.size();
     }
@@ -24,15 +23,5 @@ public class ApplicantList implements Iterable<Applicant> {
     @Override
     public Iterator<Applicant> iterator() {
         return list.iterator();
-    }
-
-    /** Clear the list of applicants. */
-    public void clear() {
-        list.clear();
-    }
-
-    /** Sets the content of the applicant list. */
-    public void setList(final ApplicantList list) {
-        this.list = list.list;
     }
 }

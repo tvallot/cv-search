@@ -1,34 +1,31 @@
 package io.github.tvallot.cvsearch.model;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Company factors used to weight experience from different companies.
+ * Weight given to a year of experience depending on the company.
+ *
+ * <p>This rule is deliberately simple and arbitrary. It is the kind of rule that makes
+ * automated CV screening biased, so it is kept as a small table that is easy to see
+ * and change.
  */
 public final class CompanyFactors {
+    private static final double DEFAULT_FACTOR = 1.0;
+
+    private static final Map<String, Double> FACTORS = Map.of(
+            "Google", 2.0,
+            "Facebook", 2.0,
+            "Apple", 2.0,
+            "Amazon", 2.0,
+            "Microsoft", 2.0,
+            "Capgemini", 1.2,
+            "Sopra Steria", 1.2,
+            "Atos", 1.2);
+
     private CompanyFactors() { }
 
-    public static final Map<String, Double> FACTORS = new HashMap<>();
-    static {
-        FACTORS.put("Google", 2.0);
-        FACTORS.put("Facebook", 2.0);
-        FACTORS.put("Apple", 2.0);
-        FACTORS.put("Amazon", 2.0);
-        FACTORS.put("Microsoft", 2.0);
-        // Exemple ESN
-        FACTORS.put("Capgemini", 1.2);
-        FACTORS.put("Sopra Steria", 1.2);
-        FACTORS.put("Atos", 1.2);
-        // Par défaut, 1.0
-    }
-
-    /**
-     * Get the factor for a given company.
-     * @param company The company name.
-     * @return The factor associated with the company.
-     */
+    /** Returns the weight of a company, 1.0 for companies that are not listed. */
     public static double getFactor(final String company) {
-        return FACTORS.getOrDefault(company, 1.0);
+        return FACTORS.getOrDefault(company, DEFAULT_FACTOR);
     }
 }

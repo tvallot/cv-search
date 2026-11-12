@@ -2,76 +2,113 @@ package io.github.tvallot.cvsearch.model;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Builder reading a Yaml file to build an Applicant object.
+ * Builds an {@link Applicant} from a YAML file.
+ *
+ * <p>Expected format:
+ * <pre>
+ * name: John Smith
+ * skills:
+ *   java: 50
+ * experience:
+ *   Google:
+ *     start: 2005
+ *     end: 2010
+ *     keywords: [java]
+ * </pre>
+ * Skill names are stored in lower case so that searches are case-insensitive.
  */
 public class ApplicantBuilder {
 
-    private File file;
+    private final File file;
 
     /**
-     * @param f Yaml file describing the applicant.
+     * @param file YAML file describing the applicant.
      */
-    public ApplicantBuilder(final File f) {
-        this.file = f;
+    public ApplicantBuilder(final File file) {
+        this.file = file;
     }
 
     /**
-     * @param filename Name of the Yaml file describing the applicant.
+     * @param filename path of the YAML file describing the applicant.
      */
     public ApplicantBuilder(final String filename) {
-        this.file = new File(filename);
+        this(new File(filename));
     }
 
     /**
-     * Build the applicant from the Yaml file provided to the constructor.
+     * Reads the file and builds the applicant.
+     *
+     * @throws UncheckedIOException     if the file cannot be read
+     * @throws IllegalArgumentException if the file content is not a valid applicant
      */
     public Applicant build() {
-        Applicant a = new Applicant();
-        Yaml yaml = new Yaml();
-        Map<String, Object> map;
-        try {
-            map = yaml.load(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            throw new Error(e);
+        Map<String, Object> content = readYaml();
+        Applicant applicant = new Applicant();
+
+        if (!(content.get("name") instanceof String name)) {
+            throw invalid("missing name");
+        }
+        applicant.setName(name);
+
+        for (Map.Entry<String, Object> skill : asMap(content.get("skills"), "skills").entrySet()) {
+            if (!(skill.getValue() instanceof Number level)) {
+                throw invalid("level of skill " + skill.getKey() + " is not a number");
+            }
+            applicant.setSkill(normalize(skill.getKey()), level.intValue());
         }
 
-        a.setName((String) map.get("name"));
-
-        // Cast may fail if the Yaml is incorrect. Ideally we should provide
-        // clean error messages.
-        @SuppressWarnings("unchecked")
-        Map<String, Integer> skills = (Map<String, Integer>) map.get("skills");
-
-        for (Map.Entry<String, Integer> entry : skills.entrySet()) {
-            String skill = entry.getKey();
-            Integer value = entry.getValue();
-            a.setSkill(skill, value);
-        }
-
-        // Experiences
-        @SuppressWarnings("unchecked")
-        Map<String, Map<String, Object>> experiences =
-            (Map<String, Map<String, Object>>) map.get("experience");
-        if (experiences != null) {
-            for (Map.Entry<String, Map<String, Object>> entry : experiences.entrySet()) {
-                String company = entry.getKey();
-                Map<String, Object> expData = entry.getValue();
-                int start = (int) expData.get("start");
-                int end = (int) expData.get("end");
-                @SuppressWarnings("unchecked")
-                List<String> keywords = (List<String>) expData.get("keywords");
-                Experience exp = new Experience(company, start, end, keywords);
-                a.addExperience(exp); // Assurez-vous que la méthode existe dans Applicant
+        Object experience = content.get("experience");
+        if (experience != null) {
+            for (Map.Entry<String, Object> entry : asMap(experience, "experience").entrySet()) {
+                applicant.addExperience(toExperience(entry.getKey(), entry.getValue()));
             }
         }
-        return a;
+        return applicant;
+    }
+
+    private Map<String, Object> readYaml() {
+        try (InputStream in = new FileInputStream(file)) {
+            return asMap(new Yaml().load(in), "root");
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot read applicant file " + file, e);
+        }
+    }
+
+    private Experience toExperience(final String company, final Object value) {
+        Map<String, Object> data = asMap(value, "experience." + company);
+        if (!(data.get("start") instanceof Number start)
+                || !(data.get("end") instanceof Number end)) {
+            throw invalid("experience at " + company + " needs a numeric start and end");
+        }
+        List<String> keywords = data.get("keywords") instanceof List<?> list
+                ? list.stream().map(k -> normalize(String.valueOf(k))).toList()
+                : List.of();
+        return new Experience(company, start.intValue(), end.intValue(), keywords);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asMap(final Object value, final String field) {
+        if (!(value instanceof Map)) {
+            throw invalid(field + " should be a mapping");
+        }
+        return (Map<String, Object>) value;
+    }
+
+    private IllegalArgumentException invalid(final String reason) {
+        return new IllegalArgumentException("Invalid applicant file " + file + ": " + reason);
+    }
+
+    private static String normalize(final String skill) {
+        return skill.strip().toLowerCase(Locale.ROOT);
     }
 }
