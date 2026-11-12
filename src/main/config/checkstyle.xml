@@ -58,7 +58,7 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See https://checkstyle.org/config_javadoc.html#JavadocPackage -->
-    <!-- MM: Disabled (too verbose given our small project).
+    <!-- Disabled (too verbose given our small project).
     <module name="JavadocPackage"/>
     -->
 
@@ -75,7 +75,7 @@
     <module name="FileLength"/>
 
     <module name="LineLength">
-        <!-- MM: Added compared to SUN's default (80) -->
+        <!-- Added compared to SUN's default (80) -->
         <property name="max" value="100"/>
         <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
         <property name="fileExtensions" value="java"/>
@@ -83,13 +83,13 @@
 
     <!-- Checks for whitespace                               -->
     <!-- See https://checkstyle.org/config_whitespace.html -->
-    <!-- MM: not forbidden officially.
+    <!-- not forbidden officially.
     <module name="FileTabCharacter"/>
     -->
 
     <!-- Miscellaneous other checks.                   -->
     <!-- See https://checkstyle.org/config_misc.html -->
-    <!-- MM: disabled, to avoid disturbing students with invisible stuff.
+    <!-- disabled, to avoid disturbing students with invisible stuff.
     <module name="RegexpSingleline">
        <property name="format" value="\s+$"/>
        <property name="minimum" value="0"/>
@@ -113,17 +113,17 @@
         <!-- See https://checkstyle.org/config_javadoc.html -->
         <module name="InvalidJavadocPosition"/>
         <module name="JavadocMethod">
-            <!-- MM: This is often included in the short description, don't force the tag. -->
+            <!-- This is often included in the short description, don't force the tag. -->
             <property name="allowMissingReturnTag" value="true"/>
             <property name="allowMissingParamTags" value="true"/>
         </module>
         <module name="JavadocType"/>
         <module name="MissingJavadocType"/>
-        <!-- MM: Disabled: if the methods are documented, private variables may not need JavaDoc
+        <!-- Disabled: if the methods are documented, private variables may not need JavaDoc
         <module name="JavadocVariable"/>
         -->
         <module name="JavadocStyle"/>
-        <!-- MM: Javadoc for getters and setters are usually redundant with the name. -->
+        <!-- Javadoc for getters and setters are usually redundant with the name. -->
         <module name="MissingJavadocMethod">
             <property name="allowMissingPropertyJavadoc" value="true"/>
         </module>
@@ -143,7 +143,7 @@
         <!-- Checks for imports                              -->
         <!-- See https://checkstyle.org/checks/imports/index.html -->
         <module name="AvoidStarImport">
-            <!-- MM: it's common to import all matchers, and it's less of a problem in tests -->
+            <!-- it's common to import all matchers, and it's less of a problem in tests -->
             <property name="excludes" value="org.hamcrest.Matchers" />
         </module>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
@@ -187,13 +187,13 @@
         <!-- See https://checkstyle.org/config_coding.html -->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
-        <!-- MM: Disabled, as it's a common pattern to have param and field with
+        <!-- Disabled, as it's a common pattern to have param and field with
         the same name for setters.
         <module name="HiddenField"/>
         -->
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
-        <!-- MM: Disabled, to make checkstyle a bit less verbose, but it's still
+        <!-- Disabled, to make checkstyle a bit less verbose, but it's still
             a good idea to avoid magic numbers
         <module name="MagicNumber"/>
         -->
@@ -204,7 +204,7 @@
 
         <!-- Checks for class design                         -->
         <!-- See https://checkstyle.org/config_design.html -->
-        <!-- MM: Disabled because too verbose and a bit tricky to understand.
+        <!-- Disabled because too verbose and a bit tricky to understand.
         <module name="DesignForExtension"/>
         -->
         <module name="FinalClass"/>
@@ -217,7 +217,7 @@
         <module name="ArrayTypeStyle"/>
         <module name="FinalParameters"/>
 
-        <!-- MM: We're providing a skeleton with TODO comments, let's not bother
+        <!-- We're providing a skeleton with TODO comments, let's not bother
             students with associated warnings.
         <module name="TodoComment"/>
         -->

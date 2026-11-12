@@ -1,0 +1,22 @@
+name: Tom Schmidt
+skills:
+  c++: 88
+  java: 70
+  python: 45
+experience:
+  Siemens:
+    start: 2006
+    end: 2014
+    keywords:
+      - c++
+  BMW:
+    start: 2014
+    end: 2023
+    keywords:
+      - java
+      - c++
+  Zalando:
+    start: 2023
+    end: 2025
+    keywords:
+      - python
