@@ -1,0 +1,18 @@
+name: Mark Robinson
+skills:
+  rust: 75
+  c: 65
+  typescript: 55
+experience:
+  Intel:
+    start: 2008
+    end: 2013
+    keywords:
+      - c
+      - rust
+  Slack:
+    start: 2013
+    end: 2022
+    keywords:
+      - typescript
+      - rust

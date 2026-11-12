@@ -1,0 +1,16 @@
+name: David Kim
+skills:
+  c#: 90
+  python: 50
+experience:
+  Microsoft:
+    start: 2010
+    end: 2018
+    keywords:
+      - c#
+  Nvidia:
+    start: 2018
+    end: 2025
+    keywords:
+      - python
+      - c#

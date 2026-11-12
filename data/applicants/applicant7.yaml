@@ -1,0 +1,16 @@
+name: Emma Rossi
+skills:
+  swift: 85
+  kotlin: 75
+experience:
+  Apple:
+    start: 2014
+    end: 2021
+    keywords:
+      - swift
+  Samsung:
+    start: 2021
+    end: 2025
+    keywords:
+      - kotlin
+      - swift

@@ -1,0 +1,18 @@
+name: Alice Dupont
+skills:
+  python: 85
+  java: 60
+  go: 40
+experience:
+  Amazon:
+    start: 2012
+    end: 2016
+    keywords:
+      - python
+      - java
+  Spotify:
+    start: 2016
+    end: 2024
+    keywords:
+      - python
+      - go

@@ -1,0 +1,16 @@
+name: Kevin O’Brien
+skills:
+  go: 95
+  rust: 55
+experience:
+  Dropbox:
+    start: 2013
+    end: 2019
+    keywords:
+      - go
+  Cloudflare:
+    start: 2019
+    end: 2025
+    keywords:
+      - go
+      - rust

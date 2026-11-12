@@ -1,0 +1,11 @@
+name: Chloé Moreau
+skills:
+  javascript: 90
+  typescript: 85
+experience:
+  Doctolib:
+    start: 2018
+    end: 2025
+    keywords:
+      - javascript
+      - typescript

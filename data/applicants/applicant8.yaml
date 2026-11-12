@@ -1,0 +1,10 @@
+name: Lucas Bernard
+skills:
+  c: 50
+  ruby: 70
+experience:
+  GitHub:
+    start: 2017
+    end: 2022
+    keywords:
+      - ruby

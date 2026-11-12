@@ -1,0 +1,18 @@
+name: Laura Steiner
+skills:
+  python: 92
+  rust: 60
+  javascript: 45
+experience:
+  IBM:
+    start: 2011
+    end: 2017
+    keywords:
+      - python
+      - javascript
+  Stripe:
+    start: 2017
+    end: 2025
+    keywords:
+      - python
+      - rust

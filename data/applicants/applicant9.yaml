@@ -1,0 +1,18 @@
+name: Maria Gonzalez
+skills:
+  scala: 60
+  java: 80
+  python: 65
+experience:
+  Twitter:
+    start: 2011
+    end: 2018
+    keywords:
+      - scala
+      - java
+  Netflix:
+    start: 2018
+    end: 2024
+    keywords:
+      - python
+      - java
